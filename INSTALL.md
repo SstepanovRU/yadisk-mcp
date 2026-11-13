@@ -35,7 +35,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 4. Проверяет токен запросом к API Яндекс Диска.
 5. Регистрирует сервер `yadisk` в Claude Code (`claude mcp add -s user`) и в Codex (`~/.codex/config.toml`).
 
-Скрипт можно запускать повторно. Если в Codex уже есть секция `[mcp_servers.yadisk]`, он её не трогает.
+Папку для клонирования можно выбрать любую: скрипт сам определяет, где лежит репозиторий и кто текущий пользователь. Скрипт можно запускать повторно. Если в Codex уже есть секция `[mcp_servers.yadisk]`, он её не трогает.
 
 Параметры:
 
@@ -57,10 +57,9 @@ claude mcp list      # yadisk должен быть в статусе "Connected
 
 ## Ручная установка (Windows)
 
-Если скрипт не подходит, сделай те же шаги руками.
+Если скрипт не подходит, сделай те же шаги руками. Все команды запускай из папки репозитория (куда сделал `git clone`).
 
 ```powershell
-cd C:\VibeCoding\yadisk-mcp
 py -3 -m venv .venv
 .\.venv\Scripts\python -m pip install -e .
 
@@ -68,30 +67,36 @@ py -3 -m venv .venv
 [Environment]::SetEnvironmentVariable('YANDEX_DISK_TOKEN', '<токен>', 'User')
 ```
 
+Полный путь к серверу на этой машине (понадобится ниже):
+
+```powershell
+(Resolve-Path .\.venv\Scripts\yadisk-mcp.exe).Path
+```
+
 Claude Code:
 
 ```powershell
-claude mcp add yadisk -s user -- C:\VibeCoding\yadisk-mcp\.venv\Scripts\yadisk-mcp.exe --safe-delete
+claude mcp add yadisk -s user -- "$PWD\.venv\Scripts\yadisk-mcp.exe" --safe-delete
 ```
 
-Codex: добавь в `%USERPROFILE%\.codex\config.toml`:
+Codex: добавь в `%USERPROFILE%\.codex\config.toml`, подставив путь из команды выше:
 
 ```toml
 [mcp_servers.yadisk]
-command = 'C:\VibeCoding\yadisk-mcp\.venv\Scripts\yadisk-mcp.exe'
+command = '<путь к yadisk-mcp.exe>'
 args = ["--safe-delete"]
 env_vars = ["YANDEX_DISK_TOKEN"]
 ```
 
 `env_vars` пробрасывает токен из окружения в сервер. Без этой строки Codex запустит сервер без токена.
 
-Claude Desktop: в `%APPDATA%\Claude\claude_desktop_config.json`:
+Claude Desktop: в `%APPDATA%\Claude\claude_desktop_config.json` (тот же путь, но в JSON каждый `\` пишется как `\\`):
 
 ```json
 {
   "mcpServers": {
     "yadisk": {
-      "command": "C:\\VibeCoding\\yadisk-mcp\\.venv\\Scripts\\yadisk-mcp.exe",
+      "command": "C:\\path\\to\\yadisk-mcp\\.venv\\Scripts\\yadisk-mcp.exe",
       "args": ["--safe-delete"]
     }
   }
@@ -112,7 +117,7 @@ echo 'export YANDEX_DISK_TOKEN=<токен>' >> ~/.zshrc
 claude mcp add yadisk -s user -- ~/yadisk-mcp/.venv/bin/yadisk-mcp --safe-delete
 ```
 
-Для Codex секция в `~/.codex/config.toml` такая же, как для Windows, только `command = '/home/<user>/yadisk-mcp/.venv/bin/yadisk-mcp'`.
+Для Codex секция в `~/.codex/config.toml` такая же, как для Windows, только в `command` нужен полный путь, который выведет `echo ~/yadisk-mcp/.venv/bin/yadisk-mcp` (`~` в TOML не раскрывается).
 
 ## Токен
 
@@ -139,7 +144,7 @@ claude mcp add yadisk -s user -- ~/yadisk-mcp/.venv/bin/yadisk-mcp --safe-delete
 ## Обновление
 
 ```powershell
-cd C:\VibeCoding\yadisk-mcp
+cd <папка репозитория>
 git pull
 ```
 
